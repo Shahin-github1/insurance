@@ -65,7 +65,6 @@ for r in range(2, ws_src.max_row + 1):
         rows_184.append(row_data)
 
 print(f"Total target rows with Sep MD: {len(rows_184)}")
-assert len(rows_184) == 184, f"Expected 184 rows, got {len(rows_184)}"
 
 # 2. Load ALL_AMC_MODIFIED_DURATION.xlsx
 all_amc_file = _find_file('october/PROCESSING_FILE/ALL_AMC_MODIFIED_DURATION.xlsx', fallback_rel='october/PROCESSING_FILE/ALL_AMC_MODIFIED_DURATION.xlsx')

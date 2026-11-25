@@ -28,7 +28,8 @@ insurance/
 │   └── README.md                      # Module-specific documentation & guide
 │
 ├── Mdcapture/                         # [MODULE 2] Modified Duration Extraction & Scraping Engine
-│   ├── build_october_md_file.py       # Master consolidation script
+│   ├── capture_md_pipeline.py         # Universal multi-month pipeline (zero hardcoded rows/cols)
+│   ├── build_october_md_file.py       # Master October consolidation script
 │   ├── scrape_all_icici.py            # ICICI Prudential web scraper (SFIN & category discovery)
 │   ├── fetch_icici_durations.py       # ICICI Prudential debt analytics extractor
 │   ├── capture_modified_duration.py   # PDF factsheet regex extractor (PyMuPDF)
@@ -37,6 +38,7 @@ insurance/
 │   ├── icici_discovered_funds.json    # Cached ICICI fund metadata (156 funds)
 │   ├── icici_october_md_results.json  # Cached ICICI October 2026 debt analytics
 │   ├── Fund List_MD_October.xlsx      # Master consolidated output workbook (184 funds)
+│   ├── Fund List_MD_sep (1).xlsx      # Base September benchmark file
 │   └── README.md                      # Module-specific documentation & guide
 │
 ├── Factsheet/                         # Disclosed insurer factsheet PDFs & source workbooks
@@ -135,20 +137,21 @@ Consolidates October 2026 Modified Duration metrics across **22 Indian Life Insu
 
 ### How to Run
 
-1. **Build / Re-generate Master Report**:
+1. **Universal Pipeline (Dynamic Month & Zero Hardcoding)**:
+   ```bash
+   cd Mdcapture
+   # Run for October:
+   python capture_md_pipeline.py --prev-month September --target-month October
+
+   # Roll forward to November:
+   python capture_md_pipeline.py --input "Fund List_MD_October.xlsx" --prev-month October --target-month November
+   ```
+
+2. **October Dedicated Consolidation Script**:
    ```bash
    cd Mdcapture
    python build_october_md_file.py
    ```
-   *Or from repository root:*
-   ```bash
-   python Mdcapture/build_october_md_file.py
-   ```
-
-2. **Primary Output**:
-   - **`Mdcapture/Fund List_MD_October.xlsx`**:
-     - `Fund_List_MD_October`: 184 rows filtered from September benchmark disclosures. 174 funds populated, 7 Star Union funds intentionally skipped, and 3 Aditya Birla Group funds left blank (unreleased).
-     - `October_Extraction_Summary`: Insurer-by-insurer breakdown of funds, extracted values, and data sources.
 
 3. **Re-scrape ICICI Prudential Portal (Optional)**:
    ```bash
