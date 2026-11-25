@@ -165,16 +165,56 @@ pnb_values = {
     'ULIF00915/12/09PROTECTOR2117': 6.3
 }
 
-# - SBI Life Group funds (from SBI LIFE GROUP NEWS LETTER OCT 2026.pdf)
-sbi_group_values = {
-    'ULGF007180711GRPSHT+FND111': 0.00,
-    'ULGF013200913GRSHT+FND2111': 5.22
+# - Kotak Mahindra Life (verified directly from Kotak_Life_Individual_October_2026.pdf)
+kotak_values = {
+    'ULGF02109/05/22KGRPNBOFND107': 4.36, # p.57
+    'ULIF-015-15/04/04-DYBNDFND-107': 4.44, # p.24
+    'ULIF-006-27/06/03-DYGLTFND-107': 6.43, # p.25
+    'ULGF-004-15/04/04-BNDFND-107': 4.35, # p.50
+    'ULGF-002-27/06/03-GLTFND-107': 6.57, # p.51
+    'ULGF02509/05/22KGRPNGLFND107': 6.16, # p.60
+    'ULGF-016-12/04/11-SECCAPFND-107': 4.33, # p.53
+    'ULIF-017-15/04/04-PNBNDFND-107': 2.49, # p.36
+    'ULIF-008-27/06/03-PNGLTFND-107': 6.31  # p.37
 }
 
-# - Tata Group Pension funds (from Factsheet/1_mannual_Data/tata/Pension-fund.pdf)
-tata_group_values = {
-    'ULGF 005 17/08/07 BO 110': 4.73,
-    'ULGF 002 02/03/04 I1 110': 5.02
+# - SBI Life (verified directly from SBI LIFE ULIP & GROUP NEWS LETTER OCT 2026.pdf)
+sbi_values = {
+    'ULIF033290618CORBONDFND111': 3.04, # ULIP p.33
+    'ULIF002100105BONDULPFND111': 4.25, # ULIP p.6
+    'ULIF007160107PENBONDFND111': 3.83, # ULIP p.16
+    'ULIF028300513PENBON2FND111': 4.81, # ULIP p.27
+    'ULIF022090211PEGURNTFND111': 2.59, # ULIP p.24
+    'ULGF007180711GRPSHT+FND111': 0.00, # Group p.9
+    'ULGF013200913GRSHT+FND2111': 5.22  # Group p.13
+}
+
+# - Shriram Life (verified directly from factsheet-for-the-month-of-oct-26.pdf)
+shriram_values = {
+    'ULIF01507/01/10PRSERVRFND128': 6.96, # p.12
+    'ULIF00520/12/07PROTECTFND128': 3.49, # p.13
+    'ULIF01301/09/09SECUREPLUS128': 4.70  # p.14
+}
+
+# - Tata AIA (verified directly from Assure-Fund and Pension-fund factsheets)
+tata_values = {
+    'ULGF 005 17/08/07 BO 110': 4.73,     # Pension p.12
+    'ULIF 030 12/01/09 IBF 110': 5.07,    # Assure p.55
+    'ULIF 022 04/02/08 FIP 110': 4.48,    # Assure p.54
+    'ULGF01028/03/18GRPINCADVT110': 4.66, # Pension p.15
+    'ULGF01128/03/18GRPSHTRMDB110': 0.69, # Pension p.17
+    'ULGF 002 02/03/04 I1 110': 5.02,     # Pension p.10
+    'ULIF 082 01/01/25 IPF 110': 4.35,    # Assure p.59
+    'ULIF 002 04/02/04 TIL 110': 5.72,    # Assure p.50
+    'ULIF 012 04/01/07 WLI 110': 4.62,    # Assure p.53
+    'ULIF 076 06/06/24 WI2 110': 4.53     # Assure p.58
+}
+
+# - Specific fund overrides for HDFC & Future Generali
+specific_overrides = {
+    'ULIF06914/06/19SecAdvFund101': (4.18, 'HDFC Indiv Factsheet p.58'),
+    'ULGF01620/06/07SovereignF101': (4.73, 'HDFC Group Factsheet p.18'),
+    'ULIF005171008PENSECURFU133': (5.22, 'Generali Indiv Factsheet p.17')
 }
 
 # Populate October Modified Duration for each row
@@ -187,8 +227,19 @@ for row in rows_184:
     oct_md = None
     note = ''
     
-    # 1. ICICI Prudential (scraped)
-    if 'ICICI' in ins:
+    # 0. Check specific fund overrides first
+    overridden = False
+    for k_sfin, (val, src_note) in specific_overrides.items():
+        if k_sfin.upper() in sfin.upper() or sfin.upper() in k_sfin.upper():
+            oct_md = val
+            note = src_note
+            overridden = True
+            break
+            
+    if overridden:
+        pass
+    # 1. ICICI Prudential (scraped from official portal)
+    elif 'ICICI' in ins:
         if r in icici_by_row:
             oct_md = icici_by_row[r].get('oct_md')
             note = 'ICICI Official Portal'
@@ -198,7 +249,47 @@ for row in rows_184:
         oct_md = None
         note = 'Star Union skipped per instruction'
         
-    # 3. Bajaj Allianz
+    # 3. Birla Sun Life Group funds (unreleased Group factsheet)
+    elif 'Birla' in ins and ('ULGF' in sfin or 'GROUP' in name):
+        oct_md = None
+        note = 'Birla Sun Life Group factsheet not published for October 2026'
+
+    # 4. Kotak Mahindra Life
+    elif 'Kotak' in ins:
+        clean_sfin = sfin.replace('-', '').replace('/', '').replace(' ', '')
+        for k, v in kotak_values.items():
+            if k.replace('-', '').replace('/', '').replace(' ', '') in clean_sfin:
+                oct_md = v
+                note = 'Kotak Factsheet PDF (parameter box)'
+                break
+
+    # 5. SBI Life
+    elif 'SBI' in ins:
+        clean_sfin = sfin.replace('+', '').replace(' ', '')
+        for k, v in sbi_values.items():
+            if k.replace('+', '').replace(' ', '') in clean_sfin:
+                oct_md = v
+                note = 'SBI Life Factsheet PDF (parameter box)'
+                break
+
+    # 6. Shriram Life
+    elif 'Shriram' in ins:
+        for k, v in shriram_values.items():
+            if k in sfin or sfin in k:
+                oct_md = v
+                note = 'Shriram Factsheet PDF (parameter box)'
+                break
+
+    # 7. Tata AIA Life
+    elif 'TATA' in ins:
+        clean_sfin = sfin.replace(' ', '').replace('/', '')
+        for k, v in tata_values.items():
+            if k.replace(' ', '').replace('/', '') in clean_sfin:
+                oct_md = v
+                note = 'Tata AIA Factsheet PDF'
+                break
+                
+    # 8. Bajaj Allianz
     elif 'Bajaj' in ins:
         for k, v in bajaj_values.items():
             if k in sfin or sfin in k:
@@ -206,7 +297,7 @@ for row in rows_184:
                 note = 'Bajaj Factsheet PDF'
                 break
                 
-    # 4. Bharti AXA
+    # 9. Bharti AXA
     elif 'Bharti' in ins:
         for k, v in bharti_values.items():
             if k in sfin or sfin in k:
@@ -214,7 +305,7 @@ for row in rows_184:
                 note = 'Bharti AXA Factsheet Excel'
                 break
                 
-    # 5. Aviva
+    # 10. Aviva
     elif 'Aviva' in ins:
         for k, v in aviva_values.items():
             if k in sfin or sfin in k:
@@ -222,7 +313,7 @@ for row in rows_184:
                 note = 'Aviva Factsheet PDF'
                 break
                 
-    # 6. DHFL Pramerica
+    # 11. DHFL Pramerica
     elif 'DHFL' in ins:
         for k, v in dhfl_values.items():
             if k in sfin or sfin in k:
@@ -230,7 +321,7 @@ for row in rows_184:
                 note = 'DHFL Factsheet Excel'
                 break
                 
-    # 7. IndiaFirst
+    # 12. IndiaFirst
     elif 'IndiaFirst' in ins:
         for k, v in indiafirst_values.items():
             if k in sfin or sfin in k:
@@ -238,7 +329,7 @@ for row in rows_184:
                 note = 'IndiaFirst Factsheet Excel'
                 break
                 
-    # 8. PNB MetLife
+    # 13. PNB MetLife
     elif 'PNB' in ins:
         for k, v in pnb_values.items():
             if k in sfin or sfin in k:
@@ -246,23 +337,7 @@ for row in rows_184:
                 note = 'PNB MetLife Factsheet Excel'
                 break
                 
-    # 9. SBI Life Group Funds
-    elif 'SBI' in ins and any(k in sfin for k in sbi_group_values):
-        for k, v in sbi_group_values.items():
-            if k in sfin:
-                oct_md = v
-                note = 'SBI Life Group Factsheet PDF'
-                break
-                
-    # 10. Tata Group Pension Funds
-    elif 'TATA' in ins and any(k.replace(' ', '') in sfin.replace(' ', '') for k in tata_group_values):
-        for k, v in tata_group_values.items():
-            if k.replace(' ', '') in sfin.replace(' ', ''):
-                oct_md = v
-                note = 'Tata Pension Factsheet PDF'
-                break
-                
-    # 11. Remaining AMCs via ALL_AMC_MODIFIED_DURATION.xlsx
+    # 14. Remaining AMCs via ALL_AMC_MODIFIED_DURATION.xlsx (HDFC, LIC, Nippon, Axis/Max, Generali, Canara, Edelweiss, Aegon)
     elif ins in amc_tag_map:
         tag = amc_tag_map[ins]
         pool = [rec for rec in all_amc_records if rec['amc'] == tag]
@@ -507,7 +582,7 @@ c1 = ws_sum.cell(cur_r, 1, "Total")
 c2 = ws_sum.cell(cur_r, 2, total_all)
 c3 = ws_sum.cell(cur_r, 3, total_pop)
 c4 = ws_sum.cell(cur_r, 4, total_blk)
-c5 = ws_sum.cell(cur_r, 5, "174 Funds Populated / 10 Funds Blank (7 Star Union skipped + 3 Birla Group not disclosed)")
+c5 = ws_sum.cell(cur_r, 5, f"{total_pop} Funds Populated / {total_blk} Funds Blank (7 Star Union skipped + {total_blk - 7} Birla Group unreleased)")
 for c in [c1, c2, c3, c4, c5]:
     c.font = Font(name="Calibri", size=11, bold=True)
     c.border = border_thin
