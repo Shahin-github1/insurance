@@ -1,0 +1,39 @@
+Insurance Calculation Functions 
+
+=IFERROR(VALUE(LEFT(TRIM(E3),IFERROR(FIND("%",TRIM(E3))-1,FIND(" ",TRIM(E3)&" ")-1))),"") -  Coupon 
+
+
+Date:
+=IFERROR(DATEVALUE(TEXTAFTER(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(E3,"("," "),")"," "),"-","/")," ",-1)),"")
+
+
+#all
+=LET(t,UPPER(SUBSTITUTE(SUBSTITUTE(TRIM(F578),"(",""),")","")),s,IFERROR(REGEXEXTRACT(t,"\d{1,2}[/-]\d{1,2}[/-]\d{4}"),""),m,IFERROR(REGEXEXTRACT(t,"\d{1,2}\s+[A-Z]{3}\s+\d{4}"),""),n,IFERROR(REGEXEXTRACT(t,"\d{8}"),""),TEXT(IF(s<>"",DATE(RIGHT(s,4),MID(SUBSTITUTE(s,"/","-"),4,2),LEFT(s,2)),IF(m<>"",DATE(RIGHT(m,4),MATCH(MID(m,4,3),{"JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"},0),LEFT(m,2)),IF(n<>"",DATE(RIGHT(n,4),MID(n,3,2),LEFT(n,2)),""))),"yyyy-mm-dd hh:mm:ss"))
+
+
+# TATA
+=LET(t,UPPER(SUBSTITUTE(SUBSTITUTE(TRIM(F578),"(",""),")","")),s,IFERROR(REGEXEXTRACT(t,"\d{1,2}[/-]\d{1,2}[/-]\d{2,4}"),""),m,IFERROR(REGEXEXTRACT(t,"\d{1,2}[-\s][A-Z]{3}[-\s]\d{2,4}"),""),n,IFERROR(REGEXEXTRACT(t,"\d{8}"),""),TEXT(IF(s<>"",LET(x,TEXTSPLIT(SUBSTITUTE(s,"/","-"),"-"),DATE(IF(LEN(INDEX(x,1,3))=2,2000+VALUE(INDEX(x,1,3)),VALUE(INDEX(x,1,3))),VALUE(INDEX(x,1,2)),VALUE(INDEX(x,1,1)))),IF(m<>"",LET(x,TEXTSPLIT(m,"-"," "),d,INDEX(x,1,1),mm,INDEX(x,1,2),y,INDEX(x,1,3),DATE(IF(LEN(y)=2,2000+VALUE(y),VALUE(y)),MATCH(mm,{"JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"},0),VALUE(d))),IF(n<>"",DATE(RIGHT(n,4),MID(n,3,2),LEFT(n,2)),""))),"yyyy-mm-dd hh:mm:ss"))
+
+
+AGENT:
+
+=LET(clean,SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(H203,")",""),"]",""),"(",""),"[",""),last1,TRIM(RIGHT(SUBSTITUTE(clean," ",REPT(" ",100)),100)),last2,IFERROR(TRIM(RIGHT(SUBSTITUTE(LEFT(clean,LEN(clean)-LEN(last1)-1)," ",REPT(" ",100)),100)),""),last3,IFERROR(TRIM(RIGHT(SUBSTITUTE(LEFT(clean,LEN(clean)-LEN(last1)-LEN(last2)-2)," ",REPT(" ",100)),100)),""),dateStr,IF(AND(OR(ISNUMBER(FIND("/",last1)),ISNUMBER(FIND("-",last1)),ISNUMBER(FIND(".",last1))),LEN(last1)>=8),last1,IF(AND(OR(ISNUMBER(FIND("/",last2)),ISNUMBER(FIND("-",last2)),ISNUMBER(FIND(".",last2))),LEN(last2)>=8),last2,IF(AND(OR(ISNUMBER(FIND("/",last3)),ISNUMBER(FIND("-",last3)),ISNUMBER(FIND(".",last3))),LEN(last3)>=8),last3,IF(OR(ISNUMBER(FIND("/",last1)),ISNUMBER(FIND("-",last1)),ISNUMBER(FIND(".",last1))),last1,IF(OR(ISNUMBER(FIND("/",last2)),ISNUMBER(FIND("-",last2)),ISNUMBER(FIND(".",last2))),last2,last3))))),sep,IF(ISNUMBER(FIND("/",dateStr)),"/",IF(ISNUMBER(FIND("-",dateStr)),"-",".")),numericDate,IFERROR(DATE(IF(LEN(TRIM(MID(dateStr,FIND(sep,dateStr,FIND(sep,dateStr)+1)+1,4)))<=2,IF(VALUE(MID(dateStr,FIND(sep,dateStr,FIND(sep,dateStr)+1)+1,4))>50,1900+VALUE(MID(dateStr,FIND(sep,dateStr,FIND(sep,dateStr)+1)+1,4)),2000+VALUE(MID(dateStr,FIND(sep,dateStr,FIND(sep,dateStr)+1)+1,4))),VALUE(MID(dateStr,FIND(sep,dateStr,FIND(sep,dateStr)+1)+1,4))),VALUE(MID(dateStr,FIND(sep,dateStr)+1,FIND(sep,dateStr,FIND(sep,dateStr)+1)-FIND(sep,dateStr)-1)),VALUE(LEFT(dateStr,FIND(sep,dateStr)-1))),""),monthNameDate,IFERROR(DATEVALUE(last1),""),digit8Date,IF(AND(LEN(last1)=8,ISNUMBER(VALUE(last1))),DATE(VALUE(RIGHT(last1,4)),VALUE(MID(last1,3,2)),VALUE(LEFT(last1,2))),""),IF(numericDate<>"",numericDate,IF(monthNameDate<>"",monthNameDate,digit8Date)))
+
+
+Year:
+Fungible Date:
+
+=MID(Y5782,4,2)&"-"&MID(Y5782,6,2)&"-"&RIGHT(Y5782,4)
+
+=TEXT(DATE(RIGHT(REGEXEXTRACT(F587,"\d{8}"),4),MID(REGEXEXTRACT(F587,"\d{8}"),3,2),LEFT(REGEXEXTRACT(F587,"\d{8}"),2)),"yyyy-mm-dd hh:mm:ss")
+
+
+
+## FOR INSURANCE MASTER Capturing 
+
+=LET(txt,TRIM(A2),x,TRIM(REGEXREPLACE(txt,"^\s*(?:\d+(?:\.\d+)?\s*%|(?:\d+\.\d+)\s*)\s*","")),y,TRIM(REGEXREPLACE(x,"(?i)^\s*(?:\d{4}\s*[-/.]\s*[A-Z]{3,9}\s*[-/.]\s*\d{1,2}|\d{1,2}\s*[-/.]\s*[A-Z]{3,9}\s*[-/.]\s*\d{2,4}|\d{4}\s*[-/.]\s*\d{1,2}\s*[-/.]\s*\d{1,2}|\d{1,2}\s*[-/.]\s*\d{1,2}\s*[-/.]?\s*\d{2,4}|\d{8}|\d{4})\s*[-–]?\s*","")),z,TRIM(REGEXREPLACE(y,"(?i)\s*\(?\s*(?:\b(?:MD|MAT)\b.*|\d{4}\s*[-/.]\s*[A-Z]{3,9}\s*[-/.]\s*\d{1,2}.*|\d{1,2}\s*[-/.]\s*[A-Z]{3,9}\s*[-/.]\s*\d{2,4}.*|\d{1,2}\s+[A-Z]{3,9}\s+\d{2,4}.*|\d{1,2}\s*[-/.]\s*\d{1,2}\s*[-/.]?\s*\d{2,4}.*|\d{8}.*|\d{4}(?:\b|[-/.]).*)$","")),r,TRIM(REGEXREPLACE(z,"[\s\(\-–]+$","")),TRIM(REGEXREPLACE(r,"(?i)^\d+\s+Days?\s+(T-Bill)$","$1")))
+
+
+with DTB
+
+=LET(txt,TRIM(A2),dtbRaw,TRIM(REGEXREPLACE(txt,"(?i)^\s*0*(91|182|364)\s+DTB\b.*","$1 DAYS TREASURY BILL")),dtb,IF(dtbRaw<>txt,dtbRaw,""),x,TRIM(REGEXREPLACE(txt,"^\s*(?:\d+(?:\.\d+)?\s*%|(?:\d+\.\d+)\s*)\s*","")),y,TRIM(REGEXREPLACE(x,"(?i)^\s*(?:\d{4}\s*[-/.]\s*[A-Z]{3,9}\s*[-/.]\s*\d{1,2}|\d{1,2}\s*[-/.]\s*[A-Z]{3,9}\s*[-/.]\s*\d{2,4}|\d{4}\s*[-/.]\s*\d{1,2}\s*[-/.]\s*\d{1,2}|\d{1,2}\s*[-/.]\s*\d{1,2}\s*[-/.]?\s*\d{2,4}|\d{8}|\d{4})\s*[-–]?\s*","")),z,TRIM(REGEXREPLACE(y,"(?i)\s*\(?\s*(?:\b(?:MD|MAT)\b.*|\d{4}\s*[-/.]\s*[A-Z]{3,9}\s*[-/.]\s*\d{1,2}.*|\d{1,2}\s*[-/.]\s*[A-Z]{3,9}\s*[-/.]\s*\d{2,4}.*|\d{1,2}\s+[A-Z]{3,9}\s+\d{2,4}.*|\d{1,2}\s*[-/.]\s*\d{1,2}\s*[-/.]?\s*\d{2,4}.*|\d{8}.*|\d{4}(?:\b|[-/.]).*)$","")),r,TRIM(REGEXREPLACE(z,"[\s\(\-–]+$","")),base,TRIM(REGEXREPLACE(r,"(?i)^\d+\s+Days?\s+(T-Bill)$","$1")),IF(dtb<>"",dtb,base))
