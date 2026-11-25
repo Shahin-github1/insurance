@@ -6,10 +6,28 @@ import os
 import fitz
 import re
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def _find_file(filename, fallback_rel=None):
+    if os.path.exists(filename):
+        return filename
+    in_script = os.path.join(SCRIPT_DIR, filename)
+    if os.path.exists(in_script):
+        return in_script
+    in_parent = os.path.join(os.path.dirname(SCRIPT_DIR), filename)
+    if os.path.exists(in_parent):
+        return in_parent
+    if fallback_rel:
+        in_parent_rel = os.path.join(os.path.dirname(SCRIPT_DIR), fallback_rel)
+        if os.path.exists(in_parent_rel):
+            return in_parent_rel
+    return filename
+
 print("Starting generation of Fund List_MD_October.xlsx...")
 
 # 1. Load base file
-wb_src = openpyxl.load_workbook('Fund List_MD_sep (1).xlsx', data_only=True)
+base_file = _find_file('Fund List_MD_sep (1).xlsx')
+wb_src = openpyxl.load_workbook(base_file, data_only=True)
 ws_src = wb_src['Sheet2']
 
 # Find header column indices
@@ -50,7 +68,8 @@ print(f"Total target rows with Sep MD: {len(rows_184)}")
 assert len(rows_184) == 184, f"Expected 184 rows, got {len(rows_184)}"
 
 # 2. Load ALL_AMC_MODIFIED_DURATION.xlsx
-wb_md = openpyxl.load_workbook('october/PROCESSING_FILE/ALL_AMC_MODIFIED_DURATION.xlsx', data_only=True)
+all_amc_file = _find_file('october/PROCESSING_FILE/ALL_AMC_MODIFIED_DURATION.xlsx', fallback_rel='october/PROCESSING_FILE/ALL_AMC_MODIFIED_DURATION.xlsx')
+wb_md = openpyxl.load_workbook(all_amc_file, data_only=True)
 ws_md = wb_md['All_Funds_Modified_Duration']
 all_amc_records = []
 for r in range(2, ws_md.max_row + 1):
@@ -65,7 +84,8 @@ for r in range(2, ws_md.max_row + 1):
     })
 
 # 3. Load ICICI scraped results
-with open('icici_october_md_results.json', 'r', encoding='utf-8') as f:
+icici_json_path = _find_file('icici_october_md_results.json')
+with open(icici_json_path, 'r', encoding='utf-8') as f:
     icici_results = json.load(f)
 icici_by_row = {item['row']: item for item in icici_results}
 
@@ -506,6 +526,6 @@ for col in ws_sum.columns:
     ws_sum.column_dimensions[col_letter].width = min(max(max_len + 4, 15), 65)
 
 # Save output workbook
-out_path = "Fund List_MD_October.xlsx"
+out_path = os.path.join(SCRIPT_DIR, "Fund List_MD_October.xlsx")
 wb_out.save(out_path)
 print(f"\nSuccessfully generated {out_path} with {len(rows_184)} filtered rows and full October metrics!")

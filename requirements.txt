@@ -1,0 +1,8 @@
+# Insurance Portfolio Processing & Analytics Suite Requirements
+# Python 3.9+ compatible
+
+# Excel manipulation, openpyxl styles, data enrichment
+openpyxl>=3.1.0
+
+# Factsheet PDF text extraction and parsing (fitz)
+PyMuPDF>=1.23.0

@@ -5,18 +5,35 @@ from collections import defaultdict
 from cleaner import clean_pdf_company_name, extract_coupon, extract_maturity
 from matcher import CompanyMatcher
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def _find_file(filename, fallback_rel=None):
+    if os.path.exists(filename):
+        return filename
+    in_script = os.path.join(SCRIPT_DIR, filename)
+    if os.path.exists(in_script):
+        return in_script
+    if fallback_rel:
+        in_fallback = os.path.join(os.path.dirname(SCRIPT_DIR), fallback_rel)
+        if os.path.exists(in_fallback):
+            return in_fallback
+        in_script_fallback = os.path.join(SCRIPT_DIR, fallback_rel)
+        if os.path.exists(in_script_fallback):
+            return in_script_fallback
+    return filename
+
 # =========================================================================
-# CONFIGURATION - Set your default file paths here
+# CONFIGURATION - Default file paths (dynamically resolved)
 # =========================================================================
-INPUT_FILE = r"october\PROCESSING_FILE\18_amc_concat_file.xlsx"
-OUTPUT_FILE = r"october\PROCESSING_FILE\18_amc_concat_file_AUTOMATED.xlsx"
-MAPPER_FILE = r"company_mapping_master.xlsx"
-INSTRUMENT_MASTER_FILE = r"MAIN_Instrument_Master_october.xlsx"
-COMPANY_MASTER_FILE = r"october\company_master_oct.xlsx"
+DEFAULT_INPUT = _find_file(r"october\PROCESSING_FILE\18_amc_concat_file.xlsx", r"october\PROCESSING_FILE\18_amc_concat_file.xlsx")
+DEFAULT_OUTPUT = os.path.join(os.path.dirname(DEFAULT_INPUT), "18_amc_concat_file_AUTOMATED.xlsx") if os.path.exists(DEFAULT_INPUT) else "18_amc_concat_file_AUTOMATED.xlsx"
+MAPPER_FILE = _find_file("company_mapping_master.xlsx", "company_mapping_master.xlsx")
+INSTRUMENT_MASTER_FILE = _find_file("MAIN_Instrument_Master_october.xlsx", "MAIN_Instrument_Master_october.xlsx")
+COMPANY_MASTER_FILE = _find_file("company_master_oct.xlsx", r"october\company_master_oct.xlsx")
 # =========================================================================
 
-def run_pipeline(input_path: str = INPUT_FILE,
-                 output_path: str = OUTPUT_FILE,
+def run_pipeline(input_path: str = DEFAULT_INPUT,
+                 output_path: str = DEFAULT_OUTPUT,
                  mapper_path: str = MAPPER_FILE,
                  im_path: str = INSTRUMENT_MASTER_FILE,
                  cm_path: str = COMPANY_MASTER_FILE):
@@ -248,7 +265,25 @@ def run_pipeline(input_path: str = INPUT_FILE,
     print("\nDone!\n")
 
 if __name__ == "__main__":
-    # Allows direct execution without CLI arguments, but also accepts arguments if provided
-    in_file = sys.argv[1] if len(sys.argv) > 1 else INPUT_FILE
-    out_file = sys.argv[2] if len(sys.argv) > 2 else OUTPUT_FILE
-    run_pipeline(input_path=in_file, output_path=out_file)
+    import argparse
+    parser = argparse.ArgumentParser(description="Pension & Insurance Company Matching & Portfolio Enrichment Pipeline")
+    parser.add_argument("--input", "-i", default=DEFAULT_INPUT, help="Path to input Excel portfolio file")
+    parser.add_argument("--output", "-o", default=DEFAULT_OUTPUT, help="Path to output enriched Excel file")
+    parser.add_argument("--mapper", "-m", default=MAPPER_FILE, help="Path to company mapping master")
+    parser.add_argument("--instrument-master", default=INSTRUMENT_MASTER_FILE, help="Path to Instrument Master")
+    parser.add_argument("--company-master", default=COMPANY_MASTER_FILE, help="Path to Company Master")
+    
+    # Support positional arguments if passed without flags:
+    if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
+        in_file = sys.argv[1]
+        out_file = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_OUTPUT
+        run_pipeline(input_path=in_file, output_path=out_file)
+    else:
+        args = parser.parse_args()
+        run_pipeline(
+            input_path=args.input,
+            output_path=args.output,
+            mapper_path=args.mapper,
+            im_path=args.instrument_master,
+            cm_path=args.company_master
+        )

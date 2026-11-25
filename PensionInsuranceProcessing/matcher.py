@@ -3,15 +3,29 @@ import openpyxl
 from difflib import SequenceMatcher
 from cleaner import clean_pdf_company_name, normalize_for_matching
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def _find_file(filename, fallback_rel=None):
+    if os.path.exists(filename):
+        return filename
+    in_script = os.path.join(SCRIPT_DIR, filename)
+    if os.path.exists(in_script):
+        return in_script
+    if fallback_rel:
+        in_fallback = os.path.join(os.path.dirname(SCRIPT_DIR), fallback_rel)
+        if os.path.exists(in_fallback):
+            return in_fallback
+    return filename
+
 class CompanyMatcher:
     def __init__(self, 
                  instrument_master_path="MAIN_Instrument_Master_october.xlsx",
-                 company_master_path=r"october\company_master_oct.xlsx",
+                 company_master_path="company_master_oct.xlsx",
                  mapper_file_path="company_mapping_master.xlsx",
                  fuzzy_threshold=0.88):
-        self.instrument_master_path = instrument_master_path
-        self.company_master_path = company_master_path
-        self.mapper_file_path = mapper_file_path
+        self.instrument_master_path = _find_file(instrument_master_path, "MAIN_Instrument_Master_october.xlsx")
+        self.company_master_path = _find_file(company_master_path, r"october\company_master_oct.xlsx")
+        self.mapper_file_path = _find_file(mapper_file_path, "company_mapping_master.xlsx")
         self.fuzzy_threshold = fuzzy_threshold
         
         self.mapper_approved = {}   # key -> dict
