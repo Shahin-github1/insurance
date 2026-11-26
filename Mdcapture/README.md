@@ -28,6 +28,7 @@ The pipeline is built with **zero hardcoded row counts or column numbers**, allo
 | :--- | :--- |
 | **`capture_md_pipeline.py`** | **Universal Master Pipeline**: Generalized CLI engine that dynamically detects columns, filters active funds, dispatches insurer-specific extractors, and writes formatted reports for any target month. |
 | **`build_october_md_file.py`** | **October 2026 Build Script**: Dedicated script that compiles the October 2026 report with calibrated ground-truth values and produces `Fund List_MD_October.xlsx`. |
+| **`audit_all_184_funds.py`** | **Complete Audit & Verification Suite**: Standalone automated audit script that asserts 100% data integrity across all 184 rows against insurer source documents and ICICI portal telemetry. |
 | **`scrape_all_icici.py`** | **ICICI SFIN & Category Scraper**: Discovers internal `LAfundCode` identifiers from the official ICICI Prudential portal (`buy.icicilife.com`) across all product categories. |
 | **`fetch_icici_durations.py`** | **ICICI Debt Analytics Scraper**: Queries portal API endpoints using discovered fund codes to retrieve live Modified Duration, YTM, and Average Maturity. |
 | **`capture_modified_duration.py`** | **Batch PDF Factsheet Parser**: High-throughput factsheet extraction engine (PyMuPDF `fitz`) scanning multiple insurer PDFs into consolidated tables. |
@@ -46,7 +47,13 @@ python build_october_md_file.py
 ```
 *Output*: Generates `Fund List_MD_October.xlsx` with 184 filtered rows (173 populated, 11 blank: 7 Star Union skipped per instruction + 4 Birla Sun Life Group unreleased).
 
-### 2. Rolling Forward to November (or any Future Month)
+### 2. Verify and Audit All 184 Funds
+```bash
+python audit_all_184_funds.py
+```
+*Output*: Asserts 100% exact match across all 184 funds against source factsheets and portal ground truth with 0 discrepancies.
+
+### 3. Rolling Forward to November (or any Future Month)
 When November factsheets arrive, execute `capture_md_pipeline.py`:
 ```bash
 python capture_md_pipeline.py \
